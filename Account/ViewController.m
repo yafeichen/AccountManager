@@ -16,6 +16,8 @@
 @property (nonatomic, strong) NSMutableDictionary       *plistDic;
 @property (nonatomic, strong) NSArray                   *plistAllKeysArr;
 @property (nonatomic, copy)   NSString                  *currentStr;
+@property (nonatomic, copy)   NSString                  *answerStr;
+@property (nonatomic, copy)   NSString                  *questionStr;
 
 @end
 
@@ -166,8 +168,54 @@
     }];
     
     [self presentViewController:alertController animated:YES completion:nil];
-}
+/**
+ 设置显示账号密码的alert
 
+ @return
+ */
+}
+-(void)setShowAccountAndSecritAlert:(NSString *)account secritStr:(NSString *)secrit accountTitle:(NSString *)title
+{
+    UIAlertController *accountAlert = [UIAlertController alertControllerWithTitle:title message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [accountAlert addAction:[UIAlertAction actionWithTitle:@"账号密码在此" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        
+    }]];
+    [accountAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.text = [NSString stringWithFormat:@"账号为：%@",account];
+        textField.userInteractionEnabled = NO;
+    }];
+    [accountAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.text = [NSString stringWithFormat:@"密码为：%@",secrit];
+        textField.userInteractionEnabled = NO;
+    }];
+    [self presentViewController:accountAlert animated:YES completion:nil];
+}
+-(void)setQuestionAlert
+{
+    UIAlertController *questionAlert = [UIAlertController alertControllerWithTitle:@"添加密保问题" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [questionAlert addAction:[UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        self.answerStr = [[[questionAlert textFields] objectAtIndex:1] text];
+        self.questionStr = [[[questionAlert textFields] objectAtIndex:0] text];
+        BOOL  right = self.answerStr.length>0&&self.questionStr.length>0?YES:NO;
+        if (right)
+        {
+            [UserDefaults setObject:self.answerStr forKey:@"answer"];
+            [UserDefaults setObject:self.questionStr forKey:@"question"];
+            [UserDefaults synchronize];
+        }else
+        {
+            kHUDNormal(@"您输入的问题不全，请重新输入");
+        }
+        
+    }]];
+    [questionAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"请输入问题";
+    }];
+    [questionAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"请输入答案";
+    }];
+    [self presentViewController:questionAlert animated:YES completion:nil];
+}
 /**
  展开或闭合分组按钮的方法
 
@@ -175,6 +223,11 @@
  */
 -(void)sectionBtnClick:(UIButton *)sender
 {
+    if ([[UserDefaults objectForKey:@"answer"] length]<=0)
+    {
+        [self setQuestionAlert];
+        return;
+    }
     NSArray *childClassArr = [[self.plistDic objectForKey:[self.classArr objectAtIndex:sender.tag-1]] allKeys];
     if ([childClassArr count]==0)
     {
@@ -204,7 +257,6 @@
 {
     _currentStr = [self.plistAllKeysArr objectAtIndex:sender.tag-100];
     [self setAlertView:@"添加账号"];
-
 }
 
 #pragma mark
@@ -303,22 +355,7 @@
     [self setShowAccountAndSecritAlert:account secritStr:secrit accountTitle:title];
     
 }
--(void)setShowAccountAndSecritAlert:(NSString *)account secritStr:(NSString *)secrit accountTitle:(NSString *)title
-{
-    UIAlertController *accountAlert = [UIAlertController alertControllerWithTitle:@"" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    [accountAlert addAction:[UIAlertAction actionWithTitle:@"账号密码在此" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        
-    }]];
-    [accountAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.text = [NSString stringWithFormat:@"账号为：%@",account];
-        textField.userInteractionEnabled = NO;
-    }];
-    [accountAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.text = [NSString stringWithFormat:@"密码为：%@",secrit];
-        textField.userInteractionEnabled = NO;
-    }];
-    [self presentViewController:accountAlert animated:YES completion:nil];
-}
+
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
